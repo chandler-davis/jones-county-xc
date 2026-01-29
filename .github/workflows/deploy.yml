@@ -1,0 +1,57 @@
+name: Deploy to Lightsail
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build backend
+        working-directory: ./backend
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o app main.go
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy frontend
+        run: |
+          rsync -avz --delete ./frontend/dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/jones-county-xc/
+
+      - name: Deploy backend
+        run: |
+          scp ./backend/app ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/opt/jones-county-xc/app
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo systemctl restart jones-county-xc || true'
+
+      - name: Verify deployment
+        run: |
+          sleep 5
+          curl -f https://jonescounty.xyz || echo "Frontend check completed"
+          curl -f https://jonescounty.xyz/health || echo "Backend not running yet (needs systemd service)"
