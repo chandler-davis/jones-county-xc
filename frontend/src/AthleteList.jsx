@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import AthleteCard from './AthleteCard'
 
 function AthleteList() {
   const { data: athletes, isLoading, error } = useQuery({
@@ -18,10 +19,12 @@ function AthleteList() {
       <h2 className="text-2xl font-bold mb-4">Athletes</h2>
       <ul className="space-y-2">
         {athletes.map((athlete) => (
-          <li key={athlete.id} className="p-4 bg-white rounded shadow">
-            <span className="font-semibold">{athlete.name}</span>
-            <span className="ml-2 text-gray-600">Grade {athlete.grade}</span>
-            <span className="ml-2 text-blue-600">PR: {athlete.personalRecord}</span>
+          <li key={athlete.id}>
+            <AthleteCard
+              name={athlete.name}
+              grade={athlete.grade}
+              personalRecord={athlete.personalRecord}
+            />
           </li>
         ))}
       </ul>
