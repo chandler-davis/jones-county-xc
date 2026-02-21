@@ -47,12 +47,19 @@ jobs:
 
       - name: Deploy backend
         run: |
-          scp ./backend/app ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/app
-          scp ./backend/jones-county-xc.service ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/jones-county-xc.service
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo systemctl stop jones-county-xc 2>/dev/null || true'
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo pkill -9 -f "/opt/jones-county-xc/app" 2>/dev/null || true'
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo mkdir -p /opt/jones-county-xc && sudo mv ~/app /opt/jones-county-xc/app && sudo chmod +x /opt/jones-county-xc/app'
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo mv ~/jones-county-xc.service /etc/systemd/system/jones-county-xc.service && sudo systemctl daemon-reload && sudo systemctl enable jones-county-xc && sudo systemctl start jones-county-xc'
+          scp ./backend/app ./backend/jones-county-xc.service ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'ENDSSH'
+            sudo systemctl stop jones-county-xc 2>/dev/null || true
+            sudo pkill -9 -f "/opt/jones-county-xc/app" 2>/dev/null || true
+            sleep 1
+            sudo mkdir -p /opt/jones-county-xc
+            sudo mv ~/app /opt/jones-county-xc/app
+            sudo chmod +x /opt/jones-county-xc/app
+            sudo mv ~/jones-county-xc.service /etc/systemd/system/jones-county-xc.service
+            sudo systemctl daemon-reload
+            sudo systemctl enable jones-county-xc
+            sudo systemctl start jones-county-xc
+          ENDSSH
           sleep 3
 
       - name: Verify deployment
