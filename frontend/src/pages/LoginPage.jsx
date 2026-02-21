@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Lock, Eye, EyeOff, AlertCircle, Loader2, ArrowLeft } from 'lucide-react'
+import { Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 
 export default function LoginPage({ onLoginSuccess }) {
   const [password, setPassword] = useState('')
@@ -39,15 +39,6 @@ export default function LoginPage({ onLoginSuccess }) {
       </div>
 
       <div className="w-full max-w-md relative">
-        {/* Back link */}
-        <a
-          href="#home"
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-6 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm">Back to site</span>
-        </a>
-
         <Card className="shadow-2xl border-0">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/25">
