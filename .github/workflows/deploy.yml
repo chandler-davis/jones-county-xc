@@ -48,7 +48,10 @@ jobs:
       - name: Deploy backend
         run: |
           scp ./backend/app ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/app
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo mkdir -p /opt/jones-county-xc && sudo mv ~/app /opt/jones-county-xc/app && sudo chmod +x /opt/jones-county-xc/app && sudo systemctl restart jones-county-xc || true'
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo mkdir -p /opt/jones-county-xc && sudo mv ~/app /opt/jones-county-xc/app && sudo chmod +x /opt/jones-county-xc/app'
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo pkill -f "/opt/jones-county-xc/app" || true'
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cd /opt/jones-county-xc && nohup sudo ./app > /var/log/jones-county-xc.log 2>&1 &'
+          sleep 3
 
       - name: Verify deployment
         run: |
