@@ -66,4 +66,7 @@ jobs:
         run: |
           sleep 5
           curl -f https://jonescounty.xyz || echo "Frontend check completed"
-          curl -f https://jonescounty.xyz/health || echo "Backend not running yet (needs systemd service)"
+          curl -f https://jonescounty.xyz/health || echo "Backend not running yet"
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo systemctl status jones-county-xc --no-pager' || true
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'sudo journalctl -u jones-county-xc -n 20 --no-pager' || true
+          curl -s -X POST https://jonescounty.xyz/api/auth/login -H "Content-Type: application/json" -d '{"password":"test"}' || echo "Auth check failed"
