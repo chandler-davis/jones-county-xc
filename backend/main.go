@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"strings"
+	"sync"
 	"time"
 
 	"jones-county-xc/backend/db"
@@ -16,6 +20,61 @@ import (
 )
 
 var queries *db.Queries
+
+// Simple in-memory token store (tokens expire after 24 hours)
+var (
+	tokenStore     = make(map[string]time.Time)
+	tokenStoreLock sync.RWMutex
+)
+
+// generateToken creates a random token
+func generateToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+// validateToken checks if a token is valid and not expired
+func validateToken(token string) bool {
+	tokenStoreLock.RLock()
+	defer tokenStoreLock.RUnlock()
+
+	expiry, exists := tokenStore[token]
+	if !exists {
+		return false
+	}
+	return time.Now().Before(expiry)
+}
+
+// authMiddleware checks for valid authentication
+func authMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(401, gin.H{"error": "Authorization header required"})
+			c.Abort()
+			return
+		}
+
+		// Expect "Bearer <token>"
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.JSON(401, gin.H{"error": "Invalid authorization format"})
+			c.Abort()
+			return
+		}
+
+		if !validateToken(parts[1]) {
+			c.JSON(401, gin.H{"error": "Invalid or expired token"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
 
 type HealthResponse struct {
 	Status  string `json:"status"`
@@ -104,6 +163,78 @@ func main() {
 			"name":    "Jones County XC API",
 			"version": "1.0.0",
 		})
+	})
+
+	// Admin password from environment variable
+	adminPassword := getEnv("ADMIN_PASSWORD", "admin123")
+
+	// Login endpoint
+	r.POST("/api/auth/login", func(c *gin.Context) {
+		var req struct {
+			Password string `json:"password" binding:"required"`
+		}
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, gin.H{"error": "Password is required"})
+			return
+		}
+
+		if req.Password != adminPassword {
+			c.JSON(401, gin.H{"error": "Invalid password"})
+			return
+		}
+
+		// Generate token
+		token, err := generateToken()
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Failed to generate token"})
+			return
+		}
+
+		// Store token with 24-hour expiry
+		tokenStoreLock.Lock()
+		tokenStore[token] = time.Now().Add(24 * time.Hour)
+		tokenStoreLock.Unlock()
+
+		c.JSON(200, gin.H{
+			"token":   token,
+			"message": "Login successful",
+		})
+	})
+
+	// Verify token endpoint
+	r.GET("/api/auth/verify", func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(401, gin.H{"valid": false, "error": "No token provided"})
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.JSON(401, gin.H{"valid": false, "error": "Invalid format"})
+			return
+		}
+
+		if validateToken(parts[1]) {
+			c.JSON(200, gin.H{"valid": true})
+		} else {
+			c.JSON(401, gin.H{"valid": false, "error": "Invalid or expired token"})
+		}
+	})
+
+	// Logout endpoint
+	r.POST("/api/auth/logout", func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader != "" {
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				tokenStoreLock.Lock()
+				delete(tokenStore, parts[1])
+				tokenStoreLock.Unlock()
+			}
+		}
+		c.JSON(200, gin.H{"message": "Logged out successfully"})
 	})
 
 	// Get all athletes
