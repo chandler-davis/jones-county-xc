@@ -106,6 +106,12 @@ export default function LoginPage({ onLoginSuccess }) {
           </CardContent>
         </Card>
 
+        <div className="mt-4 p-4 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
+          <p className="text-center text-white/80 text-sm">
+            <span className="font-medium">Demo Password:</span> admin123
+          </p>
+        </div>
+
         <p className="text-center text-white/60 text-sm mt-6">
           Jones County Cross Country Admin Portal
         </p>
