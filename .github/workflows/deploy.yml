@@ -50,8 +50,11 @@ jobs:
           scp ./backend/app ./backend/jones-county-xc.service ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'ENDSSH'
             sudo systemctl stop jones-county-xc 2>/dev/null || true
+            sudo docker stop backend 2>/dev/null || true
+            sudo docker rm backend 2>/dev/null || true
             sudo pkill -9 -f "/opt/jones-county-xc/app" 2>/dev/null || true
-            sleep 1
+            sudo pkill -9 -f "jones-county-xc" 2>/dev/null || true
+            sleep 2
             sudo mkdir -p /opt/jones-county-xc
             sudo mv ~/app /opt/jones-county-xc/app
             sudo chmod +x /opt/jones-county-xc/app

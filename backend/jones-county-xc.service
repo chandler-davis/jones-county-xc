@@ -10,6 +10,11 @@ ExecStart=/opt/jones-county-xc/app
 Restart=always
 RestartSec=5
 Environment=GIN_MODE=release
+Environment=DB_HOST=127.0.0.1
+Environment=DB_USER=jones_county_xc
+Environment=DB_PASSWORD=
+Environment=DB_NAME=jones_county_xc
+EnvironmentFile=-/opt/jones-county-xc/.env
 
 [Install]
 WantedBy=multi-user.target
