@@ -165,22 +165,24 @@ func main() {
 		})
 	})
 
-	// Admin password from environment variable
+	// Admin credentials from environment variables
+	adminUsername := getEnv("ADMIN_USERNAME", "admin")
 	adminPassword := getEnv("ADMIN_PASSWORD", "admin123")
 
 	// Login endpoint
 	r.POST("/api/auth/login", func(c *gin.Context) {
 		var req struct {
+			Username string `json:"username" binding:"required"`
 			Password string `json:"password" binding:"required"`
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(400, gin.H{"error": "Password is required"})
+			c.JSON(400, gin.H{"error": "Username and password are required"})
 			return
 		}
 
-		if req.Password != adminPassword {
-			c.JSON(401, gin.H{"error": "Invalid password"})
+		if req.Username != adminUsername || req.Password != adminPassword {
+			c.JSON(401, gin.H{"error": "Invalid username or password"})
 			return
 		}
 

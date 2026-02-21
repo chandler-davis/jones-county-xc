@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 
 export default function LoginPage({ onLoginSuccess }) {
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
@@ -20,7 +21,7 @@ export default function LoginPage({ onLoginSuccess }) {
     setIsSubmitting(true)
 
     try {
-      await login(password)
+      await login(username, password)
       onLoginSuccess?.()
     } catch (err) {
       setError(err.message || 'Invalid password')
@@ -59,6 +60,21 @@ export default function LoginPage({ onLoginSuccess }) {
               )}
 
               <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter username"
+                  className="h-11"
+                  required
+                  autoFocus
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -67,10 +83,9 @@ export default function LoginPage({ onLoginSuccess }) {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter admin password"
+                    placeholder="Enter password"
                     className="pl-10 pr-10 h-11"
                     required
-                    autoFocus
                     disabled={isSubmitting}
                   />
                   <button
@@ -91,7 +106,7 @@ export default function LoginPage({ onLoginSuccess }) {
               <Button
                 type="submit"
                 className="w-full h-11 bg-green-600 hover:bg-green-700 text-base font-semibold shadow-lg shadow-green-600/25"
-                disabled={isSubmitting || !password}
+                disabled={isSubmitting || !username || !password}
               >
                 {isSubmitting ? (
                   <>
@@ -108,7 +123,7 @@ export default function LoginPage({ onLoginSuccess }) {
 
         <div className="mt-4 p-4 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
           <p className="text-center text-white/80 text-sm">
-            <span className="font-medium">Demo Password:</span> admin123
+            <span className="font-medium">Demo Login:</span> admin / admin123
           </p>
         </div>
 
